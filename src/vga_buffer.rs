@@ -1,3 +1,8 @@
+use core::fmt::{Arguments, Result, Write};
+use lazy_static::lazy_static;
+use spin::Mutex;
+use volatile::Volatile;
+
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -42,7 +47,7 @@ const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
-    chars: [[volatile::Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 pub struct Writer {
@@ -106,15 +111,15 @@ impl Writer {
     }
 }
 
-impl core::fmt::Write for Writer {
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+impl Write for Writer {
+    fn write_str(&mut self, s: &str) -> Result {
         self.write_string(s);
         Ok(())
     }
 }
 
-lazy_static::lazy_static! {
-   pub static ref WRITER: spin::Mutex<Writer> = spin::Mutex::new(Writer {
+lazy_static! {
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
@@ -133,8 +138,8 @@ macro_rules! println {
 }
 
 #[doc(hidden)]
-pub fn _print(args: core::fmt::Arguments) {
-    use core::fmt::Write;
+pub fn _print(args: Arguments) {
+    use Write;
     WRITER.lock().write_fmt(args).unwrap();
 }
 
