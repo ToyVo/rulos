@@ -12,11 +12,12 @@ pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
 
     rulos::init();
-    // invoke a breakpoint exception
-    unsafe {
-        *(0xdeadbeef as *mut u64) = 42;
+
+    fn stack_overflow() {
+        stack_overflow();
     }
-    x86_64::instructions::interrupts::int3();
+
+    // stack_overflow();
 
     #[cfg(test)]
     test_main();
